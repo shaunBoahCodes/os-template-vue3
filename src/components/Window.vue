@@ -37,25 +37,6 @@ const restoreData = () => {
   dimensions.height = storedDimensions.height
 }
 
-//SVG data
-const border = ref(4)
-const svgDimensions = reactive({
-  w: computed(() => parseFloat(dimensions.width)),
-  h: computed(() => parseFloat(dimensions.height)),
-  outer: reactive({
-    x: 2,
-    y: 2,
-    w: computed(() => svgDimensions.w - 4),
-    h: computed(() => svgDimensions.h - 4),
-  }),
-  inner: reactive({
-    x: border.value,
-    y: border.value,
-    w: computed(() =>  svgDimensions.w - 2 * border.value),
-    h: computed(() =>  svgDimensions.h - 2 * border.value),
-  })
-})
-
 /*----------------------------------------------//
 
 Fullscreen css transition
@@ -152,13 +133,7 @@ Interact
 //----------------------------------------------*/
 const enableInteract = ref(true)
 
-const restrictToParent = interact.modifiers.restrict({
-  restriction: 'parent',
-  elementRect: { left: 0, right: 1, top: 0, bottom: 0 },
-})
-
 const topBarId = 'top-bar' + componentName.value
-const rectId = 'rect' + componentName.value
 
 interact(`#${componentName.value}`)
   .draggable({
@@ -171,7 +146,12 @@ interact(`#${componentName.value}`)
         position.y += event.dy
       },
     },
-    modifiers: [restrictToParent],
+    modifiers: [
+      interact.modifiers.restrict({
+        restriction: 'parent',
+        elementRect: { left: 0, right: 1, top: 0, bottom: 0 },
+      })
+    ],
     allowFrom: `#${topBarId}`,
     enabled: enableInteract.value
   })
@@ -186,7 +166,11 @@ interact(`#${componentName.value}`)
         dimensions.height = event.rect.height + 'px'
       }
     },
-    allowFrom: `#${rectId}`,
+    modifiers: [
+      interact.modifiers.restrictSize({
+        min: { width: 300, height: 300}
+      })
+    ],
     ignoreFrom: `#${topBarId}`,
     enabled: enableInteract.value
   })
@@ -212,16 +196,11 @@ interact(`#${componentName.value}`)
         'border-b-[1.5px] border-l-2 border-r-[1.5px] border-t-2 border-[#FAFAFA_#5A5A5A_#5A5A5A_#FAFAFA] bg-gray-195 shadow-[1.5px_1.5px_black] outline-gray-222',
       ]"
       @click="setActiveWindow"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" :width="svgDimensions.w" :height="svgDimensions.h" class="absolute bottom-[0.1px] right-[0.1px] ">
-        <rect :id="rectId" :x="svgDimensions.outer.x" :y="svgDimensions.outer.y" :width="svgDimensions.outer.w" :height="svgDimensions.outer.h" fill="none" stroke="transparent" :stroke-width="border" />
-        <rect :x="svgDimensions.inner.x" :y="svgDimensions.inner.y" :width="svgDimensions.inner.w" :height="svgDimensions.inner.h" fill="none" stroke="none" />
-      </svg>
-      
+    >   
       <!--TOP BAR-->
       <div
         :id="topBarId"
-        :class="[activeWindow == window.windowId ? 'bg-[rgb(0,0,124)]' : 'bg-gray-90', 'm-0.5 absolute z-10 flex h-[25px] w-[calc(100%-8px)] flex-row items-center justify-between px-[3px] cursor-default']"
+        :class="[activeWindow == window.windowId ? 'bg-[rgb(0,0,124)]' : 'bg-gray-90', 'm-0.5 flex h-[25px] w-auto flex-row items-center justify-between px-[3px] cursor-default']"
         @dblclick="toggleFullscreen"
         @click="console.log(1)"
       >
