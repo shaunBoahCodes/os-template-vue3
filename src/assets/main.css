@@ -1,3 +1,16 @@
 .conic-gradient {
-  background: repeating-conic-gradient(rgb(189, 190, 189) 0% 25%, rgb(255, 255, 255) 0% 50%) 50% / 2px 2px;
+  background: repeating-conic-gradient(
+      rgb(189, 190, 189) 0% 25%,
+      rgb(255, 255, 255) 0% 50%
+    )
+    50% / 2px 2px;
+}
+
+body {
+  background-color: #018281;
+}
+
+.group:focus .group-focus\:filter-icon {
+  filter: grayscale(100%) brightness(30%) sepia(100%) hue-rotate(-180deg)
+    saturate(400%) contrast(0.9);
 }

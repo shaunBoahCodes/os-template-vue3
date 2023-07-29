@@ -1,173 +1,205 @@
-import { ref, computed } from 'vue'
-import { defineStore } from 'pinia'
+import { ref, computed } from "vue";
+import { defineStore } from "pinia";
 
-export const useWindowStore = defineStore('useWindowStore', () => {
-
+export const useWindowStore = defineStore("useWindowStore", () => {
   const windows = ref([
     {
-      windowId: "Windows", 
-      windowState: "active",
+      windowId: "Windows",
+      windowState: "close",
       displayName: "Windows",
-      windowComponent: 'OSWindow',
-      windowContent: 'Windows',
-      windowContentPadding: {
-        top: '0px',
-        right: '0px',
-        bottom: '0px',
-        left: '0px'
-      },
+      windowComponent: "OSWindow",
+      windowContent: "Hello There this is a windows window",
+
       position: "absolute",
-      positionX: "1vw",
-      positionY: "1vh",
+      positionX: "100px",
+      positionY: "100px",
+      width: '500px',
+      height: '500px',
+      zIndex: 2,
+
       iconImage: "placeholder.png",
       altText: "Placeholder Icon",
-      fullscreen: false
+      fullscreen: false,
     },
     {
-      windowId: "Mac", 
-      windowState: "open",
+      windowId: "Mac",
+      windowState: "close",
       displayName: "Mac",
-      windowComponent: 'OSMac',
-      windowContent: 'Mac',
-      windowContentPadding: {
-        top: '0px',
-        right: '0px',
-        bottom: '0px',
-        left: '0px'
-      },
+      windowComponent: "OSMac",
+      windowContent: "Mac",
+
       position: "absolute",
-      positionX: "1vw",
-      positionY: "1vh",
+      positionX: "100px",
+      positionY: "100px",
+      width: '500px',
+      height: '500px',
+      zIndex: 2,
+
       iconImage: "placeholder.png",
       altText: "Placeholder Icon",
-      fullscreen: false
+      fullscreen: false,
     },
-  ])
+  ]);
 
   /*-------------------------------------------*\
     Set active window
   \*-------------------------------------------*/
-  const activeWindow = ref('nil')
+  const activeWindow = ref("nil");
 
   function setActiveWindow(window) {
-    activeWindow.value = window
+    activeWindow.value = window;
   }
-
-
 
   /*-------------------------------------------*\
     Push and pop active window from active windows array
   \*-------------------------------------------*/
-  const activeWindows = ref([])
+  const activeWindows = ref([]);
 
   function pushActiveWindow(window) {
-    activeWindows.push(window)
+    activeWindows.value.push(window);
   }
 
   function popActiveWindow(window) {
-    const windowIndex = activeWindows.indexOf(window)
+    const windowIndex = activeWindows.value.indexOf(window);
     if (windowIndex !== -1) {
-      activeWindows.splice(windowIndex, 1)
+      activeWindows.value.splice(windowIndex, 1);
     }
   }
-
-
 
   /*-------------------------------------------*\
     z-index increment function
   \*-------------------------------------------*/
-  const zIndex = ref(2)
+  const zIndex = ref(2);
 
   function zIndexIncrement(windowID) {
-    zIndex.value += 1
-    //document.getElementById(windowID).style.zIndex = zIndex NEEDS FIXING
+    zIndex.value += 1;
+
+    const window = windows.value.find((window) => window.windowId === windowID);
+    window.zIndex = zIndex.value
   }
-
-
 
   /*-------------------------------------------*\
-    Set height of max-height of fullscreen window
+    Set position
   \*-------------------------------------------*/
-  const fullscreenWindowHeight = ref(window.innerHeight + 'px')
 
-  function setFullscreenWindowHeight(height) {
-    fullscreenWindowHeight = height
+  const setWindowPosition = (id, payload) => {
+      windows.value.find((window) => window.windowId === id).positionX = payload.x
+      windows.value.find((window) => window.windowId === id).positionY = payload.y
   }
+
+  /*-------------------------------------------*\
+    Set fullscreen
+  \*-------------------------------------------*/
 
   function setFullscreen(payload) {
-    
-    const window = windows.find((window) => window.windowID === payload.windowID)
-
+    const window = windows.value.find(
+      (window) => window.windowId === payload.windowID,
+    );
+    //set position
+    //setWindowPosition(payload.windowID, payload.position)
+    //window.width = payload.dimensions.width
+    //window.height = payload.dimensions.height
     window.fullscreen = payload.fullscreen;
   }
-
-
 
   /*-------------------------------------------*\
     Window state mutator
   \*-------------------------------------------*/
+  const setWindowStatePromise = (window, payload) =>
+    new Promise((resolve) => {
+      window.windowState = payload.windowState;
+      resolve();
+    });
+
+
+
   async function setWindowState(payload) {
     // payload = {'windowState': 'open', 'windowID': 'WindowOne'}
 
-    const window = windows.value.find((window) => window.windowId === payload.windowId)
+    const window = windows.value.find(
+      (window) => window.windowId === payload.windowID,
+    );
 
     var preventAppendingOpenWindow = false;
+
     if (window.windowState == "open" || window.windowState == "minimize") {
       preventAppendingOpenWindow = true;
     }
 
     if (payload.windowState == "open") {
-      window.windowState = payload.windowState
-      delay(0)
-      zIndexIncrement(payload.windowID)
-      delay(0)
-      setActiveWindow(payload.windowID)
+      setWindowStatePromise(window, payload)
+        .then(() => {
+          zIndexIncrement(payload.windowID);
+        })
+        .then(() => {
+          setActiveWindow(payload.windowID);
+        });
       if (preventAppendingOpenWindow == false) {
-        delay(0)
-        pushActiveWindow(window)
+        pushActiveWindow(window);
       }
-
     } else if (payload.windowState == "close") {
-      window.windowState = payload.windowState
-      delay(0)
-      popActiveWindow(window)
-      delay(0)
-      setActiveWindow('nil')
-
+      setWindowStatePromise(window, payload)
+        .then(() => {
+          popActiveWindow(window);
+        })
+        .then(() => {
+          setActiveWindow("nil");
+        });
     } else if (payload.windowState == "minimize") {
-      window.windowState = payload.windowState
-      setActiveWindow('nil')
-
+      setWindowStatePromise(window, payload).then(() => {
+        setActiveWindow("nil");
+      });
     } else {
-      console.log("Error: windowState not found or invalid")
+      console.log("Error: windowState not found or invalid");
     }
   }
-
-
-
-  function delay(ms) {
-    return new Promise((resolve) => {
-      setTimeout(resolve, ms);
-    });
-  }
-
-
 
   /*-------------------------------------------*\
     getters
   \*-------------------------------------------*/
-  const getWindows = computed(() => windows)
+  const getWindows = computed(() => windows);
 
-  const getActiveWindow = computed(() => activeWindow)
+  const getActiveWindow = computed(() => activeWindow);
 
-  const getActiveWindows = computed(() => activeWindows)
+  const getActiveWindows = computed(() => activeWindows);
 
-  const getWindowById = computed((id) => windows.find((window) => window.windowId === id))
+  const getWindowById = (id) => windows.value.find((window) => window.windowId === id)
 
-  const getWindowFullscreen = computed((id) => windows.find((window) => window.windowId === id).fullscreen)
+  const getWindowDimensions = (id) => {
+    return {
+      width: windows.value.find((window) => window.windowId === id).width, 
+      height: windows.value.find((window) => window.windowId === id).height
+    }
+  }
 
-  const getFullscreenWindowHeight = computed(() => fullscreenWindowHeight)
+  const getWindowPosition = (id) => {
+    return {
+      x: windows.value.find((window) => window.windowId === id).positionX, 
+      y: windows.value.find((window) => window.windowId === id).positionY
+    }
+  }
 
-  return { windows, activeWindow, setActiveWindow, activeWindows, pushActiveWindow, popActiveWindow, zIndex, zIndexIncrement, fullscreenWindowHeight, setFullscreen, setFullscreen, setWindowState, delay,
-  getActiveWindow, getWindowById, getWindowFullscreen, getWindows, getActiveWindows, getFullscreenWindowHeight }
-})
+  const getWindowFullscreen = (id) => windows.value.find((window) => window.windowId === id).fullscreen
+
+  return {
+    windows,
+    activeWindow,
+    setActiveWindow,
+    activeWindows,
+    pushActiveWindow,
+    popActiveWindow,
+    zIndex,
+    zIndexIncrement,
+    setFullscreen,
+    setFullscreen,
+    setWindowState,
+    getActiveWindow,
+    getWindowById,
+    getWindowPosition,
+    setWindowPosition,
+    getWindowDimensions,
+    getWindowFullscreen,
+    getWindows,
+    getActiveWindows,
+  };
+});

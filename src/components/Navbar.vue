@@ -1,45 +1,65 @@
 <script setup>
-import { onMounted, ref } from "vue"
-import { useWindowStore } from '@/stores/windowStore'
-const store = useWindowStore()
+import { computed, onMounted, ref } from "vue";
+import { useWindowStore } from "@/stores/windowStore";
+const store = useWindowStore();
 
-const time = ref('16:20')
-
-//const activeWindows = store.windows
+const activeWindow = store.getActiveWindow;
 
 function openWindow(windowId) {
   const payload = {
-    'windowState': 'open',
-    'windowId': windowId
-  }
-  store.setWindowState(payload)
+    windowState: "open",
+    windowID: windowId,
+  };
+  store.setWindowState(payload);
 }
+
+const time = ref('')
+
+function date() {
+  const date = new Date()
+  let hours = date.getHours()
+  let mins = date.getMinutes()
+  const amPm = hours >= 12 ? 'PM' : 'AM';
+
+  hours = String(hours).padStart(2, '0')
+  mins = String(mins).padStart(2, '0')
+  time.value = `${hours}:${mins} ${amPm}`
+}
+
+onMounted(() => {
+  setInterval(() => date(), 1000);
+})
 </script>
 
 <template>
-  <nav class="w-full h-[35px] bg-gray-192 border-t-2 border-gray-250 z-50 flex items-center">
-    <div 
-        v-for="window in store.windows" 
-        :key="window.key"
-    >
-        <button 
-            v-if="activeWindow!==window.windowId && (window.windowState=='open' || window.windowState=='minimize')" @click="openWindow(window.windowId)" 
-            class="w-[100px] h-[23px] bg-gray-192 border-[1.5px] rounded-[0.5px] border-[#FAFAFA_#5A5A5A_#5A5A5A_#FAFAFA] active:border-[black_#FAFAFA_#FAFAFA_black] shadow-[1.5px_1.5px_black] active:shadow-none  flex justify-start items-center mx-[2px] px-[5px] font-bold text-[0.7rem]">
-                {{window.displayName}}
-        </button>
-        <button 
-            v-else 
-            @click="openWindow(window.windowId)" 
-            class="w-[100px] h-[23px] cursor-default conic-gradient border-[1.5px] rounded-[0.5px] border-[black_#FAFAFA_#FAFAFA_black] flex justify-start items-center mx-[2px] px-[5px] font-bold text-[0.7rem]">
-                {{window.displayName}}
-        </button>
+  <nav
+    class="z-50 flex h-[35px] w-full items-center border-t-2 border-gray-250 bg-gray-192"
+  >
+    <div v-for="window in store.activeWindows" :key="window.key">
+      <button
+        v-if="activeWindow == window.windowId"
+        @click="openWindow(window.windowId)"
+        class="conic-gradient mx-[2px] flex h-[23px] w-[100px] cursor-default items-center justify-start rounded-[0.5px] border-[1.5px] border-[black_#FAFAFA_#FAFAFA_black] px-[5px] text-[0.7rem] font-bold"
+      >
+        {{ window.displayName }}
+      </button>
+      <button
+        v-else
+        @click="openWindow(window.windowId)"
+        class="mx-[2px] flex h-[23px] w-[100px] items-center justify-start rounded-[0.5px] border-[1.5px] border-[#FAFAFA_#5A5A5A_#5A5A5A_#FAFAFA] bg-gray-192 px-[5px] text-[0.7rem] font-bold shadow-[1.5px_1.5px_black] active:border-[black_#FAFAFA_#FAFAFA_black] active:shadow-none"
+      >
+        {{ window.displayName }}
+      </button>
     </div>
     <div class="flex-grow"></div>
-    <div alt="time" class="w-[75px] m-[5px] h-[25px] bg-gray-192 border-[1.5px] border-[#5A5A5A_#FAFAFA_#FAFAFA_#5A5A5A] flex justify-center items-center text-[0.6rem]">
-        <!-- <img src="../assets/speakers.png" class="icon-image"/> -->
-        <span>
-            {{time}}
-        </span>
+    <div
+      alt="time"
+      class="m-[5px] flex h-[25px] w-[75px] items-center justify-center border-[1.5px] border-[#5A5A5A_#FAFAFA_#FAFAFA_#5A5A5A] bg-gray-192 text-[0.6rem]"
+    >
+      <!-- <img src="../assets/speakers.png" class="icon-image"/> -->
+      <span>
+        {{ time }}
+      </span>
     </div>
   </nav>
 </template>
